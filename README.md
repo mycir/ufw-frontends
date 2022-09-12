@@ -1,8 +1,22 @@
-![ufw Frontends](share/logo.png)
+A Python 3/Gtk 3 port of [ufw-frontends](https://github.com/baudm/ufw-frontends). Many thanks to the author.
+
+All fully developed features of 0.3.2 working fine on Ubuntu 20.04 (depends python3-gi).
+
+A few liberties:
+
+1. gfw module renamed to ufw-frontends - perhaps the installed Python package name should follow that of the project.
+
+2. UI contents of 'share' moved to 'ufw-frontends/resources'.
+
+3. ufw-gtk removed, in favour of ufw-frontends.desktop > ufw-frontends > ufw-frontends-pkexec.
+
+A problem moving or editing rules - 'Cannot specify insert and delete' - has been addressed by adding a few minor functions to frontend.py - presumably the UFW backend or iptables have changed since 0.3.2 was released - a 'do no harm' solution in lieu of a full analysis of UFW, iptables and the author's code.
+<br/><br/>
+![ufw Frontends](ufw_frontends/resources/logo.png)
 ![Main Window](images/Screenshot-Uncomplicated-Firewall.png)
 ![Firewall Rule](images/Screenshot-Firewall-Rule.png)
 
-_Currently, UFW provides only a command-line interface (CLI) for user interaction--the ``ufw`` command. This project implements graphical frontends for UFW using PyGTK._
+_Currently, UFW provides only a command-line interface (CLI) for user interaction--the ``ufw`` command. This project implements graphical frontends for UFW using ~~PyGTK~~ PyGObject._
 
 # News
 ## Version 0.3.2 Released! _(April 6, 2012)_
@@ -43,7 +57,7 @@ _Currently, UFW provides only a command-line interface (CLI) for user interactio
   * Supports editing and reordering of existing rules
   * Ability to enable/disable IPv6 support
   * Import/export of rules <sup>1</sup>
-  * Intuitive and straightforward PyGTK interface
+  * Intuitive and straightforward ~~PyGTK~~ PyGObject interface
 
 <sup>1</sup> **NOTE:** Exported rules are simply shell scripts containing a series of ufw commands, nothing fancy. This approach is advantageous because you can execute the scripts directly.
 
@@ -59,7 +73,7 @@ ufw-frontends uses the UFW Python modules directly, thus preventing code duplica
 ## ufw-frontends vs. Gufw at a glance
 | &nbsp; | **ufw-gtk 0.3.2** | **Gufw 12.04.1** |
 |:--|:------------------|:-----------------|
-| Toolkits | PyGTK             | GTK+ 3 (via GIR) |
+| Toolkits | ~~PyGTK~~ PyGObject             | GTK+ 3 (via GIR) |
 | Code Size | **42.0 KiB**      | 61.7 KiB         |
 | Translations | _Partial (via ufw)_ | **Yes**          |
 | Edit Rules | **Yes**           | No               |

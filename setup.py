@@ -1,34 +1,25 @@
 #!/usr/bin/env python
 
-import os.path
-from distutils.command.install import install
 from distutils.core import setup
 
-from gfw import __version__
-
-
-class Install(install, object):
-
-    def run(self):
-        # Install scripts to prefix/sbin instead of prefix/bin
-        root = os.path.dirname(self.install_scripts)
-        self.install_scripts = os.path.join(root, 'sbin')
-        super(Install, self).run()
-
+from ufw_frontends import __version__
 
 setup(
-    name='gfw',
+    name='ufw-frontends',
     version=__version__,
     description='Graphical frontends for ufw',
     author='Darwin M. Bautista',
     author_email='djclue917@gmail.com',
     url='http://code.google.com/p/ufw-frontends/',
-    cmdclass={'install': Install},
-    scripts=['ufw-gtk'],
-    packages=['gfw'],
+    packages=['ufw_frontends'],
+    package_data={ 
+        'ufw_frontends': ['resources/*'],
+    },
     data_files=[
-        ('share/ufw-frontends', ['share/ufw-gtk.ui', 'share/icon.png', 'share/logo.png']),
-        ('share/applications', ['share/ufw-gtk.desktop'])
+        ('share/icons/hicolor/128x128/apps', ['share/ufw-frontends.png']),
+        ('sbin', ['sbin/ufw-frontends', 'sbin/ufw-frontends-pkexec']),
+        ('share/applications', ['share/ufw-frontends-gtk.desktop']),
+        ('../share/polkit-1/actions', ['share/com.baudm.pkexec.ufw-frontends.policy'])
     ],
     classifiers=[
         'Development Status :: 4 - Beta',
@@ -36,6 +27,6 @@ setup(
         'License :: OSI Approved :: GNU General Public License (GPL)',
         'Natural Language :: English',
         'Operating System :: POSIX :: Linux',
-        'Programming Language :: Python :: 2.6'
+        'Programming Language :: Python :: 3.8'
     ]
 )
