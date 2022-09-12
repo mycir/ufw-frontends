@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Name=Firewall Configuration by ufw-frontends
+Comment=A better easy way to configure your firewall
+Keywords=ufw-frontends;security;firewall;network;
+Exec=ufw-frontends gtk
+Icon=ufw-frontends
+Terminal=false
+Type=Application
+Categories=System;Settings;
