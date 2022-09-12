@@ -15,7 +15,11 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+# (Ported to Python 3/Gtk 3 from https://github.com/baudm/ufw-frontends)
 
+import os
+import stat
 import shlex
 
 import ufw.common
@@ -23,17 +27,18 @@ import ufw.frontend
 from ufw.util import valid_address
 from ufw.parser import UFWCommandRule
 
-from gfw.util import ANY_ADDR
+from ufw_frontends.util import ANY_ADDR
+
 
 # Override the error function used by UFWFrontend
 def _error(msg, exit=True):
     raise ufw.common.UFWError(msg)
 
+
 ufw.frontend.error = _error
 
 
 class Frontend(ufw.frontend.UFWFrontend, object):
-
     def __init__(self):
         super(Frontend, self).__init__(False)
         # Compatibility for ufw 0.31
@@ -55,42 +60,43 @@ class Frontend(ufw.frontend.UFWFrontend, object):
         """
         # Determine src type
         if rule.src == ANY_ADDR:
-            from_type = 'any'
+            from_type = "any"
         else:
-            from_type = ('v6' if valid_address(rule.src, '6') else 'v4')
+            from_type = "v6" if valid_address(rule.src, "6") else "v4"
         # Determine dst type
         if rule.dst == ANY_ADDR:
-            to_type = 'any'
+            to_type = "any"
         else:
-            to_type = ('v6' if valid_address(rule.dst, '6') else 'v4')
+            to_type = "v6" if valid_address(rule.dst, "6") else "v4"
         # Figure out the type of rule (IPv4, IPv6, or both)
-        if from_type == 'any' and to_type == 'any':
-            ip_version = 'both'
-        elif from_type != 'any' and to_type != 'any' and from_type != to_type:
+        if from_type == "any" and to_type == "any":
+            ip_version = "both"
+        elif from_type != "any" and to_type != "any" and from_type != to_type:
             err_msg = _("Mixed IP versions for 'from' and 'to'")
             raise ufw.common.UFWError(err_msg)
-        elif from_type != 'any':
+        elif from_type != "any":
             ip_version = from_type
-        elif to_type != 'any':
+        elif to_type != "any":
             ip_version = to_type
         return ip_version
 
     def config_ipv6(self, enable):
-        conf = ('yes' if enable else 'no')
-        self.backend.set_default(self.backend.files['defaults'], 'IPV6', conf)
+        conf = "yes" if enable else "no"
+        self.backend.set_default(self.backend.files["defaults"], "IPV6", conf)
 
     def config_ipt_module(self, name, enable):
         try:
-            modules = self.backend.defaults['ipt_modules'].split()
+            modules = self.backend.defaults["ipt_modules"].split()
         except KeyError:
             modules = []
         if enable and name not in modules:
             modules.append(name)
         elif not enable and name in modules:
             modules.remove(name)
-        modules = '"' + ' '.join(modules) + '"'
-        self.backend.set_default(self.backend.files['defaults'],
-                                 'IPT_MODULES', modules)
+        modules = '"' + " ".join(modules) + '"'
+        self.backend.set_default(
+            self.backend.files["defaults"], "IPT_MODULES", modules
+        )
 
     def reload(self):
         """Reload firewall"""
@@ -113,20 +119,22 @@ class Frontend(ufw.frontend.UFWFrontend, object):
                     app_rules.append(t)
             yield (i, r)
 
-    ## Modified version of UFWCommandRule.get_command()
-    ## It correctly exports the command string for DENY OUT rules
+    # # Modified version of UFWCommandRule.get_command()
+    # # It correctly exports the command string for DENY OUT rules
     @staticmethod
     def _get_command(r):
-        '''Get command string for rule'''
+        """Get command string for rule"""
         res = r.action
 
-        if (r.dst == "0.0.0.0/0" or r.dst == "::/0") and \
-           (r.src == "0.0.0.0/0" or r.src == "::/0") and \
-           r.sport == "any" and \
-           r.sapp == "" and \
-           r.interface_in == "" and \
-           r.interface_out == "" and \
-           r.dport != "any":
+        if (
+            (r.dst == "0.0.0.0/0" or r.dst == "::/0")
+            and (r.src == "0.0.0.0/0" or r.src == "::/0")
+            and r.sport == "any"
+            and r.sapp == ""
+            and r.interface_in == ""
+            and r.interface_out == ""
+            and r.dport != "any"
+        ):
             # Short syntax
             if r.direction == "out":
                 res += " %s" % r.direction
@@ -147,8 +155,8 @@ class Frontend(ufw.frontend.UFWFrontend, object):
             if r.logtype != "":
                 res += " %s" % r.logtype
 
-            for i in ['src', 'dst']:
-                if i == 'src':
+            for i in ["src", "dst"]:
+                if i == "src":
                     loc = r.src
                     port = r.sport
                     app = r.sapp
@@ -157,7 +165,10 @@ class Frontend(ufw.frontend.UFWFrontend, object):
                     loc = r.dst
                     port = r.dport
                     app = r.dapp
-                    dir = r.direction + " to"
+                    if res == r.action:
+                        dir = r.direction + " to"
+                    else:
+                        dir = "to"
 
                 if loc == "0.0.0.0/0" or loc == "::/0":
                     loc = "any"
@@ -169,6 +180,7 @@ class Frontend(ufw.frontend.UFWFrontend, object):
                         res += " app %s" % app
                     elif port != "any":
                         res += " port %s" % port
+                # count = 1
 
             # If still haven't added more than action, then we have a very
             # generic rule, so mark it as such.
@@ -181,8 +193,8 @@ class Frontend(ufw.frontend.UFWFrontend, object):
         return res
 
     def export_rules(self, path):
-        with open(path, 'w') as f:
-            f.write('#!/bin/sh\n')
+        with open(path, "w") as f:
+            f.write("#!/bin/sh\n")
             for i, rule in self.get_rules():
                 rule = rule.dup_rule()
                 # Enclose app names in quotation marks
@@ -190,19 +202,21 @@ class Frontend(ufw.frontend.UFWFrontend, object):
                     rule.sapp = "'" + rule.sapp + "'"
                 if rule.dapp:
                     rule.dapp = "'" + rule.dapp + "'"
-                cmd = 'ufw ' + self._get_command(rule) + '\n'
+                cmd = "ufw " + self._get_command(rule) + "\n"
                 f.write(cmd)
+        st = os.stat(path)
+        os.chmod(path, st.st_mode | stat.S_IWOTH | stat.S_IXOTH)
 
     def import_rules(self, path):
-        with open(path, 'r') as f:
+        with open(path, "r") as f:
             for line in f:
-                if not line.startswith('ufw '):
+                if not line.startswith("ufw "):
                     continue
                 args = shlex.split(line)
-                args[0] = 'rule'
+                args[0] = "rule"
                 p = UFWCommandRule(args[1])
                 pr = p.parse(args)
-                self.set_rule(pr.data['rule'], pr.data['iptype'])
+                self.set_rule(pr.data["rule"], pr.data["iptype"])
 
     def set_rule(self, rule, ip_version=None):
         """set_rule(rule, ip_version=None)
@@ -216,7 +230,7 @@ class Frontend(ufw.frontend.UFWFrontend, object):
         rule = rule.dup_rule()
         # Fix any inconsistency
         if rule.sapp or rule.dapp:
-            rule.set_protocol('any')
+            rule.set_protocol("any")
             if rule.sapp:
                 rule.sport = rule.sapp
             if rule.dapp:
@@ -231,18 +245,27 @@ class Frontend(ufw.frontend.UFWFrontend, object):
             e = rule.position + 1
             for r in self.backend.get_rules()[s:e]:
                 r.set_position(0)
-        return res
+        return res       
 
     def update_rule(self, pos, rule):
-        self.delete_rule(pos, True)
-        if not rule.position:
-            rule.set_position(pos)
+        self.remove_rule(self.backend.get_rule_by_number(pos))
+        rule.position = pos
         self.set_rule(rule)
 
     def move_rule(self, old, new):
         if old == new:
             return
-        rule = self.backend.get_rule_by_number(old).dup_rule()
-        self.delete_rule(old, True)
+        # Original code throws exception
+        # in backend_iptables.py 0.36-6ubuntu1
+        # # if position > 0 and rule.remove:
+        # #     err_msg = _("Cannot specify insert and delete")
+        rule_old = self.backend.get_rule_by_number(old)
+        rule = rule_old.dup_rule()
+        self.remove_rule(rule_old)
         rule.set_position(new)
+        self.set_rule(rule)
+
+    def remove_rule(self, rule):
+        rule.set_position(0)
+        rule.remove = True
         self.set_rule(rule)
