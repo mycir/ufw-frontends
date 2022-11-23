@@ -1,0 +1,2 @@
+#!/bin/bash
+python3 -m ufw_frontends.ufw-frontends "$@"

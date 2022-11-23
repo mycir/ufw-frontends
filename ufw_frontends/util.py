@@ -24,11 +24,9 @@ ANY_PORT = 'any'
 
 
 def get_ui_path(ui_file):
-    path = os.path.join('/usr', 'share', 'ufw-frontends', ui_file)
-    if not os.path.exists(path):
-        path = os.path.join('share', ui_file)
+    path = os.path.join(os.path.dirname(__file__), 'resources', ui_file)
     return path
-
+    
 
 def get_formatted_rule(rule):
     r = rule.dup_rule()
