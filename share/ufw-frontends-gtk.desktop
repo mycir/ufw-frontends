@@ -8,3 +8,7 @@ Icon=ufw-frontends
 Terminal=false
 Type=Application
 Categories=System;Settings;
+Categories=GNOME;GTK;Settings;Security;X-GNOME-Settings-Panel;X-GNOME-SystemSettings;X-Unity-Settings-Panel;X-XFCE-SettingsDialog;X-XFCE-SystemSettings;
+X-GNOME-Settings-Panel=ufw-frontends
+X-Unity-Settings-Panel=ufw-frontends
+X-Ubuntu-Gettext-Domain=ufw-frontends
